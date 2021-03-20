@@ -1,0 +1,173 @@
+#!/bin/bash
+
+# Pride Prompt v1.0.0
+# by Katrina Scialdone
+#
+# Add a splash of color to your workspace by adding a
+#   pride flag to your terminal prompt!
+#
+# In your ~/.bashrc, add the line below, replacing flag_name
+#   with a flag of your choice:
+#
+#   export PS1="$(prideprompt -f flag_name) \u@\h:\w\$"
+#
+# You can see a list of all flags, or add your own, by opening
+#   the config file with this command:
+#
+#   $ prideprompt -c
+#
+# Or reset your config to the default (this is the best way
+#   to update the built-in flags as well) with:
+#
+#   $ prideprompt -r
+
+# Set up flag listing
+declare -A PP_FLAGS
+
+addflag() {
+  local key=$1; shift
+  PP_FLAGS[${key}]="$@"
+}
+
+aliasflag() {
+  local key=$1; shift
+  for al in "$@"; do
+    PP_FLAGS[${al}]=${PP_FLAGS[${key}]}
+  done
+}
+
+# Load flags from config file
+
+pp_cfgdir=~/.config/prideprompt
+pp_config=$pp_cfgdir/.prideprompt
+
+_write_default_cfg() {
+  mkdir -p $pp_cfgdir
+  touch $pp_config
+  
+cat <<CFG > $pp_config
+# To add a custom flag, use the format below, replacing the numbers
+#   with ANSI formatting code numbers:
+#
+# addflag flag_name 1 2 3 4 5
+#
+# To add flag aliases, use the format below:
+#
+# aliasflag flag_name alias1 alias2 alias3 ... aliasN
+
+addflag rainbow "48;5;160 48;5;166 48;5;226 48;5;022 48;5;018 48;5;093"
+addflag lesbian "48;5;160 48;5;166 107 48;5;135 48;5;129"
+addflag gaymale "48;5;029 48;5;036 48;5;043 107 48;5;033 48;5;027 48;5;018"
+addflag bisexual "48;5;161 48;5;161 48;5;090 48;5;018 48;5;018"
+addflag transgender "48;5;087 48;5;183 107 48;5;183 48;5;087"
+
+addflag pansexual "48;5;161 48;5;226 48;5;045"
+addflag polysexual "48;5;161 48;5;120 48;5;045"
+addflag asexual "48;5;000 48;5;247 107 48;5;090"
+addflag aromantic "48;5;028 48;5;113 107 48;5;247 48;5;000"
+addflag agender "48;5;000 48;5;247 107 48;5;113 107 48;5;247 48;5;000"
+
+addflag intersex "48;5;226 48;5;090 48;5;226 48;5;090 48;5;226"
+addflag nonbinary "48;5;226 107 48;5;090 48;5;000"
+addflag genderfluid "48;5;205 107 48;5;090 48;5;000 48;5;018"
+addflag genderqueer "48;5;140 107 48;5;022"
+
+aliasflag rainbow lgbt pride r
+aliasflag lesbian les wlw l
+aliasflag gaymale gayman mlm g
+aliasflag bisexual bi b
+aliasflag transgender trans tg t
+
+aliasflag pansexual pan p p1
+aliasflag polysexual poly p2
+aliasflag asexual ace a a1
+aliasflag aromantic aro a2
+aliasflag agender agen a3
+
+aliasflag intersex isex i
+aliasflag nonbinary enby nb
+aliasflag genderfluid gfluid gf
+aliasflag genderqueer gqueer gq
+CFG
+}
+
+# Handle command line arguments
+
+_usage() {
+cat <<USAGE
+Usage: $0 [options]
+
+-f | --flag       Set the flag to add to your prompt.
+-h | --help       Show this usage dialog.
+-c | --config     Open the config file in your default editor.
+-r | --resetcfg   Reset the config file to the default value.
+USAGE
+
+  _cleanup
+  exit 2
+}
+
+_parse_options() {
+  local parsed=$(getopt -n prideprompt -o f:hcr -l flag:,help,config,resetcfg -- "$@")
+  if [ "$?" != "0" ]; then
+    usage
+  fi
+
+  eval set -- "$parsed"
+  while :; do
+    case "$1" in
+      -f | --flag) PP_FLAG="$2"; shift 2 ;;
+      -h | --help) _usage ;;
+      -c | --config)
+        if which xdg-open &> /dev/null; then
+          xdg-open $pp_config       # linux
+        else
+          open $pp_config           # mac
+        fi
+        exit 0 ;;
+      -r | --resetcfg)
+        read -p "Are you sure you want to reset your prideprompt config? [y/N] " -n 1 -r confirm
+        case "$confirm" in
+          y|Y) 
+            _write_default_cfg
+            echo -e "\nYour config has been reset. To update, run\n  source ~/.bashrc"
+            ;;  
+          *) ;;
+        esac
+        exit 0 ;;
+      --) shift; break ;;
+    esac
+  done
+}
+
+# Clean up internal functions / variables
+
+_cleanup() {
+  unset PP_FLAGS
+  unset PP_FLAG
+  unset -f addflag
+  unset -f aliasflag
+  unset -f _usage
+  unset -f _parse_options
+  unset -f _cleanup
+  unset -f _write_default_cfg
+}
+
+# Main execution
+
+_parse_options "$@"
+if [[ -z "${PP_FLAG+set}" ]]; then
+  _usage
+fi
+
+if [ ! -f $pp_config ]; then
+  _write_default_cfg
+fi
+source $pp_config
+
+for color in ${PP_FLAGS[$PP_FLAG]}; do
+  echo -ne "\[\e[${color}m\] "
+done
+echo -e "\[\e[0m\]"
+
+_cleanup
