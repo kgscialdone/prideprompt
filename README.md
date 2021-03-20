@@ -5,6 +5,8 @@ Add a splash of color to your workspace by adding a pride flag to your terminal 
 
 Note: This requires a terminal emulator that supports ANSI true-color formatting codes.
 
+![A small selection of pride flags available with prideprompt](https://user-images.githubusercontent.com/45317150/111855494-bf693500-88ea-11eb-9fac-78bd327bf77f.png)
+
 ## Installation and Usage
 
 Download the `prideprompt` file from this repo and place it somewhere it can be easily accessed via the terminal, for example in `/usr/bin`. You may need to give it executable permissions, which can be done with the following command:
